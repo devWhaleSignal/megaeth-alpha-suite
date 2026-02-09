@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MegaETH Alpha Suite</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div class="gradient-overlay"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 32 32" fill="none">
+                    <path d="M16 2L4 9V23L16 30L28 23V9L16 2Z" stroke="url(#logo-grad)" stroke-width="2"/>
+                    <path d="M16 8L10 11.5V18.5L16 22L22 18.5V11.5L16 8Z" fill="url(#logo-grad)"/>
+                    <defs><linearGradient id="logo-grad" x1="4" y1="2" x2="28" y2="30"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs>
+                </svg>
+            </div>
+            <span class="logo-text">MegaETH <span class="accent">Alpha</span></span>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="active"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+            <a href="/tokens"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M6 12h12"/></svg>Tokens</a>
+            <a href="/whales"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Whales</a>
+            <a href="/arbitrage"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>Arbitrage</a>
+        </div>
+        <div class="status"><span class="status-dot"></span>LIVE</div>
+    </nav>
+
+    <main class="container">
+        <header class="page-header">
+            <div>
+                <h1>Dashboard</h1>
+                <p class="subtitle">Real-time blockchain intelligence</p>
+            </div>
+            <div class="network-badge"><span class="dot"></span>MegaETH Mainnet</div>
+        </header>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+                <div class="stat-info"><span class="stat-value" id="tokens-scanned">{{ stats.tokens_scanned }}</span><span class="stat-label">Tokens Scanned</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+                <div class="stat-info"><span class="stat-value" id="trades-detected">{{ stats.trades_detected }}</span><span class="stat-label">Whale Trades</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="4"/></svg></div>
+                <div class="stat-info"><span class="stat-value" id="arb-found">{{ stats.arb_found }}</span><span class="stat-label">Arb Opportunities</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+                <div class="stat-info"><span class="stat-value" id="total-profit">{{ stats.total_profit }} <small>ETH</small></span><span class="stat-label">Total Profit</span></div>
+            </div>
+        </div>
+
+        <div class="panels">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M6 12h12"/></svg><h2>Latest Tokens</h2></div>
+                    <a href="/tokens" class="link">View All</a>
+                </div>
+                <div class="panel-content" id="latest-tokens">
+                    <div class="empty-state"><div class="spinner"></div><p>Scanning for new tokens...</p></div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg><h2>Whale Activity</h2></div>
+                    <a href="/whales" class="link">View All</a>
+                </div>
+                <div class="panel-content" id="latest-trades">
+                    <div class="empty-state"><div class="spinner"></div><p>Monitoring whale wallets...</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel full">
+            <div class="panel-header">
+                <div class="panel-title"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg><h2>Arbitrage Opportunities</h2></div>
+                <a href="/arbitrage" class="link">View All</a>
+            </div>
+            <div class="panel-content" id="latest-arbs">
+                <div class="empty-state"><div class="spinner"></div><p>Scanning for arbitrage...</p></div>
+            </div>
+        </div>
+    </main>
+
+    <footer><span>MegaETH Alpha Suite</span><span class="sep">|</span><span>Real-time Blockchain Intelligence</span></footer>
+    <script src="/static/js/three-bg.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

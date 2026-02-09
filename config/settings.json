@@ -1,0 +1,40 @@
+{
+  "network": {
+    "rpc_url": "https://rpc.megaeth.com",
+    "chain_id": 6342,
+    "explorer_url": "https://explorer.megaeth.com"
+  },
+  "wallet": {
+    "private_key": "YOUR_PRIVATE_KEY_HERE",
+    "address": "YOUR_WALLET_ADDRESS_HERE"
+  },
+  "trading": {
+    "max_buy_amount_eth": 0.1,
+    "slippage_percent": 5,
+    "gas_limit": 300000,
+    "auto_sell": true,
+    "take_profit_percent": 50,
+    "stop_loss_percent": 20
+  },
+  "scanner": {
+    "min_liquidity_usd": 1000,
+    "max_token_age_seconds": 300,
+    "blacklisted_tokens": [],
+    "scan_interval_seconds": 1
+  },
+  "alerts": {
+    "telegram_bot_token": "YOUR_TELEGRAM_BOT_TOKEN",
+    "telegram_chat_id": "YOUR_CHAT_ID",
+    "discord_webhook_url": ""
+  },
+  "copy_trade": {
+    "enabled": true,
+    "max_copy_amount_eth": 0.05,
+    "copy_delay_seconds": 0
+  },
+  "arbitrage": {
+    "enabled": true,
+    "min_profit_percent": 0.5,
+    "dexes": ["uniswap", "sushiswap"]
+  }
+}

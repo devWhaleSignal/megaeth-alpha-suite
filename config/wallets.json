@@ -1,0 +1,11 @@
+{
+  "tracked_wallets": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "Example Whale",
+      "copy_trade": true,
+      "alert_on_trade": true
+    }
+  ],
+  "blacklisted_wallets": []
+}

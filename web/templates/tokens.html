@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tokens - MegaETH Alpha Suite</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div class="gradient-overlay"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <div class="logo-icon"><svg viewBox="0 0 32 32" fill="none"><path d="M16 2L4 9V23L16 30L28 23V9L16 2Z" stroke="url(#logo-grad)" stroke-width="2"/><path d="M16 8L10 11.5V18.5L16 22L22 18.5V11.5L16 8Z" fill="url(#logo-grad)"/><defs><linearGradient id="logo-grad" x1="4" y1="2" x2="28" y2="30"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs></svg></div>
+            <span class="logo-text">MegaETH <span class="accent">Alpha</span></span>
+        </div>
+        <div class="nav-links">
+            <a href="/"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+            <a href="/tokens" class="active"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M6 12h12"/></svg>Tokens</a>
+            <a href="/whales"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Whales</a>
+            <a href="/arbitrage"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>Arbitrage</a>
+        </div>
+        <div class="status"><span class="status-dot"></span>LIVE</div>
+    </nav>
+
+    <main class="container">
+        <header class="page-header">
+            <div><h1>New Tokens</h1><p class="subtitle">Real-time token deployment detection</p></div>
+        </header>
+        
+        <div class="filters">
+            <div class="search-box">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" placeholder="Search by name or address..." id="token-search">
+            </div>
+            <select class="filter-select" id="safety-filter">
+                <option value="all">All Tokens</option>
+                <option value="safe">Safe Only</option>
+                <option value="risky">Risky Only</option>
+            </select>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table" id="tokens-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Name</th>
+                        <th>Symbol</th>
+                        <th>Address</th>
+                        <th>Liquidity</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tokens-tbody">
+                    {% for token in tokens %}
+                    <tr class="{{ 'safe' if token.security.safe else 'risky' }}">
+                        <td class="mono">{{ token.timestamp }}</td>
+                        <td>{{ token.info.name }}</td>
+                        <td class="bold">{{ token.info.symbol }}</td>
+                        <td class="mono dim">{{ token.address[:10] }}...{{ token.address[-8:] }}</td>
+                        <td>${{ token.liquidity | round(2) }}</td>
+                        <td><span class="badge {{ 'safe' if token.security.safe else 'danger' }}">{{ 'SAFE' if token.security.safe else 'RISKY' }}</span></td>
+                        <td><a href="https://explorer.megaeth.com/token/{{ token.address }}" target="_blank" class="btn-sm">View</a></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="empty">No tokens detected yet</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="/static/js/three-bg.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
