@@ -90,18 +90,28 @@
         }
         .header-links a:hover { color: #fff; }
         .btn-twitter {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
             background: #1d9bf0;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
             color: #fff;
             text-decoration: none;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(29, 155, 240, 0.3);
+            transition: all 0.3s;
         }
-        .btn-twitter svg { width: 16px; height: 16px; }
+        .btn-twitter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(29, 155, 240, 0.4);
+        }
+        .btn-twitter svg { width: 18px; height: 18px; }
 
         /* Hero */
         .hero {
@@ -562,6 +572,11 @@
 <body>
     <div class="bg-grid"></div>
     <div class="bg-glow"></div>
+    
+    <a href="https://twitter.com/megaethalpha1" target="_blank" class="btn-twitter">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        Follow
+    </a>
 
     <header>
         <div class="container">
@@ -573,10 +588,6 @@
                 <div class="header-links">
                     <a href="https://megaeth.blockscout.com" target="_blank">Explorer</a>
                     <a href="https://mevx.io" target="_blank">MEVX</a>
-                    <a href="https://twitter.com/megaethalpha1" target="_blank" class="btn-twitter">
-                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                        Follow
-                    </a>
                 </div>
             </div>
         </div>
