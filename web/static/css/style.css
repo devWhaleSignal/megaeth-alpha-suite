@@ -128,21 +128,26 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    color: var(--text-dim);
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #1d9bf0, #0c7abf);
+    border-radius: 100px;
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
     transition: all 0.2s;
+    box-shadow: 0 0 20px rgba(29, 155, 240, 0.3);
 }
 
 .twitter-link:hover {
-    color: var(--text);
-    background: var(--surface-light);
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(29, 155, 240, 0.5);
 }
 
 .twitter-link svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
 }
 
 @keyframes pulse {
