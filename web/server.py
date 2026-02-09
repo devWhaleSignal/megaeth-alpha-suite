@@ -281,6 +281,80 @@ async def leaderboard_page(request: Request):
         "wallets": store.get_wallet_leaderboard()
     })
 
+# Token lookup endpoint
+@app.get("/api/token/{address}")
+async def lookup_token(address: str):
+    """Lookup any token by address directly from blockchain"""
+    from web3 import Web3
+    import json
+    
+    try:
+        with open('config/settings.json') as f:
+            config = json.load(f)
+        
+        w3 = Web3(Web3.HTTPProvider(config['network']['rpc_url']))
+        
+        if not w3.is_connected():
+            return {"error": "RPC not connected"}
+        
+        # Check if contract exists
+        code = w3.eth.get_code(address)
+        if len(code) == 0:
+            return {"error": "Contract not found", "address": address}
+        
+        # ERC20 ABI
+        abi = [
+            {'constant': True, 'inputs': [], 'name': 'name', 'outputs': [{'name': '', 'type': 'string'}], 'type': 'function'},
+            {'constant': True, 'inputs': [], 'name': 'symbol', 'outputs': [{'name': '', 'type': 'string'}], 'type': 'function'},
+            {'constant': True, 'inputs': [], 'name': 'decimals', 'outputs': [{'name': '', 'type': 'uint8'}], 'type': 'function'},
+            {'constant': True, 'inputs': [], 'name': 'totalSupply', 'outputs': [{'name': '', 'type': 'uint256'}], 'type': 'function'},
+            {'constant': True, 'inputs': [], 'name': 'owner', 'outputs': [{'name': '', 'type': 'address'}], 'type': 'function'}
+        ]
+        
+        contract = w3.eth.contract(address=w3.to_checksum_address(address), abi=abi)
+        
+        try:
+            name = contract.functions.name().call()
+        except:
+            name = "Unknown"
+        
+        try:
+            symbol = contract.functions.symbol().call()
+        except:
+            symbol = "???"
+        
+        try:
+            decimals = contract.functions.decimals().call()
+        except:
+            decimals = 18
+        
+        try:
+            total_supply = contract.functions.totalSupply().call()
+            total_supply_formatted = total_supply / (10 ** decimals)
+        except:
+            total_supply = 0
+            total_supply_formatted = 0
+        
+        try:
+            owner = contract.functions.owner().call()
+        except:
+            owner = None
+        
+        return {
+            "address": address,
+            "name": name,
+            "symbol": symbol,
+            "decimals": decimals,
+            "total_supply": str(total_supply),
+            "total_supply_formatted": total_supply_formatted,
+            "owner": owner,
+            "contract_size": len(code),
+            "chain_id": w3.eth.chain_id
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
 # WebSocket for real-time updates
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

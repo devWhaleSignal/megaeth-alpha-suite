@@ -1,7 +1,7 @@
 {
   "network": {
     "rpc_url": "https://carrot.megaeth.com/rpc",
-    "chain_id": 6342,
+    "chain_id": 6343,
     "explorer_url": "https://megaexplorer.xyz"
   },
   "wallet": {
