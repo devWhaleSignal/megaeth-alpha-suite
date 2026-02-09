@@ -381,6 +381,11 @@ async def leaderboard_page(request: Request):
         "wallets": store.get_wallet_leaderboard()
     })
 
+# Scanner page
+@app.get("/scanner", response_class=HTMLResponse)
+async def scanner_page(request: Request):
+    return templates.TemplateResponse("scanner.html", {"request": request})
+
 # Token lookup endpoint
 @app.get("/api/token/{address}")
 async def lookup_token(address: str):
@@ -450,6 +455,212 @@ async def lookup_token(address: str):
             "owner": owner,
             "contract_size": len(code),
             "chain_id": w3.eth.chain_id
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+# Full token scan endpoint with holder analysis
+@app.get("/api/scan/{address}")
+async def scan_token(address: str):
+    """Full token scan with holders, flags, and safety score"""
+    from web3 import Web3
+    import json
+    
+    try:
+        config_path = Path(__file__).parent.parent / 'config' / 'settings.json'
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        w3 = Web3(Web3.HTTPProvider(config['network']['rpc_url']))
+        
+        if not w3.is_connected():
+            return {"error": "Cannot connect to MegaETH RPC"}
+        
+        address = w3.to_checksum_address(address)
+        
+        # Check if contract exists
+        code = w3.eth.get_code(address)
+        if len(code) == 0:
+            return {"error": "Contract not found at this address"}
+        
+        # Extended ERC20 ABI
+        abi = [
+            {'constant': True, 'inputs': [], 'name': 'name', 'outputs': [{'name': '', 'type': 'string'}], 'type': 'function'},
+            {'constant': True, 'inputs': [], 'name': 'symbol', 'outputs': [{'name': '', 'type': 'string'}], 'type': 'function'},
+            {'constant': True, 'inputs': [], 'name': 'decimals', 'outputs': [{'name': '', 'type': 'uint8'}], 'type': 'function'},
+            {'constant': True, 'inputs': [], 'name': 'totalSupply', 'outputs': [{'name': '', 'type': 'uint256'}], 'type': 'function'},
+            {'constant': True, 'inputs': [], 'name': 'owner', 'outputs': [{'name': '', 'type': 'address'}], 'type': 'function'},
+            {'constant': True, 'inputs': [{'name': '', 'type': 'address'}], 'name': 'balanceOf', 'outputs': [{'name': '', 'type': 'uint256'}], 'type': 'function'},
+        ]
+        
+        contract = w3.eth.contract(address=address, abi=abi)
+        
+        # Get basic info
+        try:
+            name = contract.functions.name().call()
+        except:
+            name = "Unknown"
+        
+        try:
+            symbol = contract.functions.symbol().call()
+        except:
+            symbol = "???"
+        
+        try:
+            decimals = contract.functions.decimals().call()
+        except:
+            decimals = 18
+        
+        try:
+            total_supply = contract.functions.totalSupply().call()
+            total_supply_formatted = total_supply / (10 ** decimals)
+        except:
+            total_supply = 0
+            total_supply_formatted = 0
+        
+        try:
+            owner = contract.functions.owner().call()
+            if owner == "0x0000000000000000000000000000000000000000":
+                owner = None
+        except:
+            owner = None
+        
+        # Try to find deployer from recent transactions (simplified)
+        deployer = None
+        try:
+            # Get creation tx from explorer API if available
+            pass
+        except:
+            pass
+        
+        # Analyze top holders by checking Transfer events
+        top_holders = []
+        dev_percent = 0
+        
+        try:
+            # Get Transfer event signature
+            transfer_topic = w3.keccak(text="Transfer(address,address,uint256)").hex()
+            
+            # Get recent transfer logs
+            logs = w3.eth.get_logs({
+                'address': address,
+                'topics': [transfer_topic],
+                'fromBlock': max(0, w3.eth.block_number - 5000),
+                'toBlock': 'latest'
+            })
+            
+            # Track balances from transfers
+            balances = {}
+            for log in logs:
+                from_addr = '0x' + log['topics'][1].hex()[-40:]
+                to_addr = '0x' + log['topics'][2].hex()[-40:]
+                value = int(log['data'].hex(), 16)
+                
+                if from_addr != '0x0000000000000000000000000000000000000000':
+                    balances[from_addr] = balances.get(from_addr, 0) - value
+                balances[to_addr] = balances.get(to_addr, 0) + value
+            
+            # Sort by balance
+            sorted_holders = sorted(balances.items(), key=lambda x: x[1], reverse=True)[:10]
+            
+            for addr, balance in sorted_holders:
+                if balance > 0 and total_supply > 0:
+                    percent = (balance / total_supply) * 100
+                    label = None
+                    
+                    # Check if it's a contract (LP, etc)
+                    holder_code = w3.eth.get_code(w3.to_checksum_address(addr))
+                    if len(holder_code) > 0:
+                        label = "contract"
+                    
+                    # Check if it's the owner/deployer
+                    if owner and addr.lower() == owner.lower():
+                        label = "dev"
+                        dev_percent = percent
+                    
+                    top_holders.append({
+                        "address": addr,
+                        "percent": percent,
+                        "label": label
+                    })
+        except Exception as e:
+            print(f"Holder analysis error: {e}")
+        
+        # Build security flags
+        flags = []
+        safety_score = 50  # Start neutral
+        
+        # Owner check
+        if owner is None:
+            flags.append({"text": "Ownership renounced", "good": True})
+            safety_score += 15
+        else:
+            flags.append({"text": "Owner can modify contract", "warn": True})
+            safety_score -= 10
+        
+        # Contract size check
+        if len(code) < 500:
+            flags.append({"text": "Very small contract (possible proxy)", "warn": True})
+            safety_score -= 5
+        elif len(code) > 20000:
+            flags.append({"text": "Large contract (complex logic)", "neutral": True})
+        else:
+            flags.append({"text": "Normal contract size", "good": True})
+            safety_score += 5
+        
+        # Dev holdings check
+        if dev_percent > 50:
+            flags.append({"text": f"Dev holds {dev_percent:.1f}% - HIGH RISK", "bad": True})
+            safety_score -= 30
+        elif dev_percent > 20:
+            flags.append({"text": f"Dev holds {dev_percent:.1f}%", "warn": True})
+            safety_score -= 15
+        elif dev_percent > 0:
+            flags.append({"text": f"Dev holds {dev_percent:.1f}%", "neutral": True})
+        else:
+            flags.append({"text": "Dev wallet not identified", "neutral": True})
+        
+        # Top holder concentration
+        if top_holders:
+            top1_percent = top_holders[0]['percent'] if top_holders else 0
+            if top1_percent > 50:
+                flags.append({"text": f"Top holder owns {top1_percent:.1f}%", "bad": True})
+                safety_score -= 20
+            elif top1_percent > 20:
+                flags.append({"text": f"Top holder owns {top1_percent:.1f}%", "warn": True})
+                safety_score -= 10
+            else:
+                flags.append({"text": "Good holder distribution", "good": True})
+                safety_score += 10
+        
+        # Supply check
+        if total_supply_formatted > 1e15:
+            flags.append({"text": "Extremely high supply", "warn": True})
+        elif total_supply_formatted < 1000:
+            flags.append({"text": "Very low supply", "neutral": True})
+        else:
+            flags.append({"text": "Normal supply range", "good": True})
+            safety_score += 5
+        
+        # Clamp score
+        safety_score = max(0, min(100, safety_score))
+        
+        return {
+            "address": address,
+            "name": name,
+            "symbol": symbol,
+            "decimals": decimals,
+            "total_supply": str(total_supply),
+            "total_supply_formatted": total_supply_formatted,
+            "owner": owner,
+            "deployer": deployer,
+            "contract_size": len(code),
+            "chain_id": w3.eth.chain_id,
+            "top_holders": top_holders,
+            "dev_percent": dev_percent,
+            "flags": flags,
+            "safety_score": safety_score
         }
         
     except Exception as e:

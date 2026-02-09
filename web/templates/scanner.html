@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Scanner - MegaETH Alpha Suite</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        .scanner-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .scan-input-wrapper {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .scan-input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .scan-input:focus {
+            outline: none;
+            border-color: #a78bfa;
+            box-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
+        }
+        .scan-btn {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .scan-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(167, 139, 250, 0.4);
+        }
+        .scan-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .result-card h3 {
+            margin: 0 0 1.5rem 0;
+            color: #a78bfa;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .token-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .token-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .token-title h2 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        .token-title .symbol {
+            color: #a78bfa;
+            font-size: 1rem;
+            margin-left: 0.5rem;
+        }
+        .token-title .address {
+            color: rgba(255,255,255,0.5);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+        .score-display {
+            text-align: center;
+            padding: 2rem;
+        }
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .score-circle.safe { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .score-circle.medium { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .score-circle.danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .score-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        .info-item {
+            background: rgba(255,255,255,0.02);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .info-item .label {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+        .info-item .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            word-break: break-all;
+        }
+        .holder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .holder-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+        }
+        .holder-rank {
+            width: 28px;
+            height: 28px;
+            background: rgba(167, 139, 250, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .holder-address {
+            flex: 1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+        .holder-percent {
+            font-weight: 600;
+        }
+        .holder-percent.danger { color: #ef4444; }
+        .holder-percent.warning { color: #f59e0b; }
+        .holder-percent.safe { color: #10b981; }
+        .holder-label {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .holder-label.dev { background: #ef4444; }
+        .holder-label.contract { background: #6366f1; }
+        .holder-label.lp { background: #10b981; }
+        .flags-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        .flag-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+        }
+        .flag-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .flag-icon.good { background: #10b981; }
+        .flag-icon.bad { background: #ef4444; }
+        .flag-icon.warn { background: #f59e0b; }
+        .flag-icon.neutral { background: rgba(255,255,255,0.2); }
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: rgba(255,255,255,0.5);
+        }
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .error-msg {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 1.5rem;
+            border-radius: 12px;
+            color: #ef4444;
+            text-align: center;
+        }
+        #results { display: none; }
+        .action-btns {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .action-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .action-btn.primary {
+            background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+            color: #fff;
+        }
+        .action-btn.secondary {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div class="gradient-overlay"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <div class="logo-icon"><svg viewBox="0 0 32 32" fill="none"><path d="M16 2L4 9V23L16 30L28 23V9L16 2Z" stroke="url(#logo-grad)" stroke-width="2"/><path d="M16 8L10 11.5V18.5L16 22L22 18.5V11.5L16 8Z" fill="url(#logo-grad)"/><defs><linearGradient id="logo-grad" x1="4" y1="2" x2="28" y2="30"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs></svg></div>
+            <span class="logo-text">MegaETH <span class="accent">Alpha</span></span>
+        </div>
+        <div class="nav-links">
+            <a href="/"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+            <a href="/scanner" class="active"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>Scanner</a>
+            <a href="/tokens"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M6 12h12"/></svg>Tokens</a>
+            <a href="/whales"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Whales</a>
+            <a href="/leaderboard"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z"/></svg>Leaderboard</a>
+        </div>
+        <a href="https://twitter.com/megaethalpha1" target="_blank" class="twitter-link">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            Follow
+        </a>
+        <div class="status"><span class="status-dot"></span>LIVE</div>
+    </nav>
+
+    <main class="container scanner-container">
+        <header class="page-header">
+            <div><h1>🔍 Token Scanner</h1><p class="subtitle">Scan any MegaETH token - Check dev holdings, honeypot, top holders & more</p></div>
+        </header>
+        
+        <div class="scan-input-wrapper">
+            <input type="text" class="scan-input" id="token-address" placeholder="Enter token contract address (0x...)">
+            <button class="scan-btn" id="scan-btn" onclick="scanToken()">
+                <span id="btn-text">Scan Token</span>
+            </button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Scanning token on MegaETH...</p>
+        </div>
+
+        <div id="error" class="error-msg" style="display: none;"></div>
+
+        <div id="results">
+            <!-- Token Header -->
+            <div class="result-card">
+                <div class="token-header">
+                    <div class="token-icon" id="token-icon">?</div>
+                    <div class="token-title">
+                        <h2 id="token-name">Token Name <span class="symbol" id="token-symbol">$SYM</span></h2>
+                        <div class="address" id="token-addr">0x...</div>
+                    </div>
+                </div>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="label">Total Supply</div>
+                        <div class="value" id="total-supply">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Decimals</div>
+                        <div class="value" id="decimals">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Contract Owner</div>
+                        <div class="value" id="owner">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Chain</div>
+                        <div class="value" id="chain">MegaETH</div>
+                    </div>
+                </div>
+
+                <div class="action-btns">
+                    <a href="#" id="chart-link" target="_blank" class="action-btn primary">📈 View Chart (MEVX)</a>
+                    <a href="#" id="explorer-link" target="_blank" class="action-btn secondary">🔗 Block Explorer</a>
+                </div>
+            </div>
+
+            <!-- Safety Score -->
+            <div class="result-card">
+                <h3>🛡️ Safety Score</h3>
+                <div class="score-display">
+                    <div class="score-circle" id="score-circle">?</div>
+                    <div class="score-label" id="score-label">Analyzing...</div>
+                </div>
+            </div>
+
+            <!-- Flags -->
+            <div class="result-card">
+                <h3>🚩 Security Flags</h3>
+                <div class="flags-grid" id="flags-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Top Holders -->
+            <div class="result-card">
+                <h3>👥 Top Holders</h3>
+                <div class="holder-list" id="holder-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer><span>MegaETH Alpha Suite</span><span class="sep">|</span><span>Real-time Blockchain Intelligence</span></footer>
+    <script src="/static/js/three-bg.js"></script>
+    <script>
+        async function scanToken() {
+            const address = document.getElementById('token-address').value.trim();
+            
+            if (!address || !address.startsWith('0x') || address.length !== 42) {
+                showError('Please enter a valid contract address (0x...)');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('scan-btn').disabled = true;
+            document.getElementById('btn-text').textContent = 'Scanning...';
+            
+            try {
+                const response = await fetch(`/api/scan/${address}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                displayResults(data);
+                
+            } catch (err) {
+                showError('Failed to scan token: ' + err.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('scan-btn').disabled = false;
+                document.getElementById('btn-text').textContent = 'Scan Token';
+            }
+        }
+        
+        function showError(msg) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = msg;
+            document.getElementById('scan-btn').disabled = false;
+            document.getElementById('btn-text').textContent = 'Scan Token';
+        }
+        
+        function displayResults(data) {
+            document.getElementById('results').style.display = 'block';
+            
+            // Header
+            document.getElementById('token-icon').textContent = data.symbol ? data.symbol[0] : '?';
+            document.getElementById('token-name').innerHTML = `${data.name} <span class="symbol">$${data.symbol}</span>`;
+            document.getElementById('token-addr').textContent = data.address;
+            
+            // Info
+            document.getElementById('total-supply').textContent = formatNumber(data.total_supply_formatted);
+            document.getElementById('decimals').textContent = data.decimals;
+            document.getElementById('owner').textContent = data.owner ? (data.owner.slice(0,10) + '...' + data.owner.slice(-6)) : 'Renounced ✓';
+            document.getElementById('chain').textContent = `MegaETH (${data.chain_id})`;
+            
+            // Links
+            document.getElementById('chart-link').href = `https://mevx.io/megaeth/${data.address}`;
+            document.getElementById('explorer-link').href = `https://megaeth.blockscout.com/address/${data.address}`;
+            
+            // Safety Score
+            const score = data.safety_score || 50;
+            const scoreCircle = document.getElementById('score-circle');
+            scoreCircle.textContent = score;
+            scoreCircle.className = 'score-circle ' + (score >= 70 ? 'safe' : score >= 40 ? 'medium' : 'danger');
+            
+            const riskLevel = score >= 70 ? 'LOW RISK' : score >= 40 ? 'MEDIUM RISK' : 'HIGH RISK';
+            document.getElementById('score-label').textContent = riskLevel;
+            
+            // Flags
+            const flagsGrid = document.getElementById('flags-grid');
+            flagsGrid.innerHTML = '';
+            
+            const flags = data.flags || [];
+            flags.forEach(flag => {
+                const iconClass = flag.good ? 'good' : flag.warn ? 'warn' : flag.bad ? 'bad' : 'neutral';
+                const icon = flag.good ? '✓' : flag.bad ? '✗' : flag.warn ? '!' : '?';
+                flagsGrid.innerHTML += `
+                    <div class="flag-item">
+                        <div class="flag-icon ${iconClass}">${icon}</div>
+                        <span>${flag.text}</span>
+                    </div>
+                `;
+            });
+            
+            // Top Holders
+            const holderList = document.getElementById('holder-list');
+            holderList.innerHTML = '';
+            
+            const holders = data.top_holders || [];
+            if (holders.length === 0) {
+                holderList.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.5);">No holder data available</div>';
+            } else {
+                holders.forEach((holder, i) => {
+                    const pctClass = holder.percent > 20 ? 'danger' : holder.percent > 10 ? 'warning' : 'safe';
+                    const label = holder.label ? `<span class="holder-label ${holder.label}">${holder.label.toUpperCase()}</span>` : '';
+                    holderList.innerHTML += `
+                        <div class="holder-item">
+                            <div class="holder-rank">${i + 1}</div>
+                            <div class="holder-address">${holder.address.slice(0,10)}...${holder.address.slice(-6)}</div>
+                            ${label}
+                            <div class="holder-percent ${pctClass}">${holder.percent.toFixed(2)}%</div>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+        function formatNumber(num) {
+            if (!num) return '0';
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return num.toFixed(2);
+        }
+        
+        // Allow Enter key to scan
+        document.getElementById('token-address').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') scanToken();
+        });
+        
+        // Check URL for address parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const addrParam = urlParams.get('address');
+        if (addrParam) {
+            document.getElementById('token-address').value = addrParam;
+            scanToken();
+        }
+    </script>
+</body>
+</html>
