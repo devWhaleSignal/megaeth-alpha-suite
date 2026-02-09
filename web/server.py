@@ -8,14 +8,114 @@ import random
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Query
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+# Background scanner task
+async def background_scanner():
+    """Background task to scan for new tokens"""
+    try:
+        from web3 import Web3
+    except ImportError:
+        print("web3 not installed, scanner disabled")
+        return
+    
+    config_path = Path(__file__).parent.parent / 'config' / 'settings.json'
+    if not config_path.exists():
+        print("Config not found, scanner disabled")
+        return
+    
+    with open(config_path) as f:
+        config = json.load(f)
+    
+    rpc_url = config['network']['rpc_url']
+    w3 = Web3(Web3.HTTPProvider(rpc_url))
+    
+    if not w3.is_connected():
+        print(f"Cannot connect to RPC: {rpc_url}")
+        return
+    
+    print(f"Scanner started - Chain ID: {w3.eth.chain_id}")
+    last_block = w3.eth.block_number - 50  # Start from recent blocks
+    
+    # ERC20 ABI
+    erc20_abi = [
+        {'constant': True, 'inputs': [], 'name': 'name', 'outputs': [{'name': '', 'type': 'string'}], 'type': 'function'},
+        {'constant': True, 'inputs': [], 'name': 'symbol', 'outputs': [{'name': '', 'type': 'string'}], 'type': 'function'},
+        {'constant': True, 'inputs': [], 'name': 'decimals', 'outputs': [{'name': '', 'type': 'uint8'}], 'type': 'function'},
+        {'constant': True, 'inputs': [], 'name': 'totalSupply', 'outputs': [{'name': '', 'type': 'uint256'}], 'type': 'function'}
+    ]
+    
+    while True:
+        try:
+            current_block = w3.eth.block_number
+            
+            for block_num in range(last_block + 1, min(last_block + 10, current_block + 1)):
+                try:
+                    block = w3.eth.get_block(block_num, full_transactions=True)
+                    
+                    for tx in block.transactions:
+                        if tx['to'] is None:  # Contract deployment
+                            try:
+                                receipt = w3.eth.get_transaction_receipt(tx['hash'])
+                                contract_addr = receipt['contractAddress']
+                                
+                                if contract_addr:
+                                    # Try to get token info
+                                    contract = w3.eth.contract(address=contract_addr, abi=erc20_abi)
+                                    
+                                    try:
+                                        name = contract.functions.name().call()
+                                        symbol = contract.functions.symbol().call()
+                                        decimals = contract.functions.decimals().call()
+                                        total_supply = contract.functions.totalSupply().call()
+                                        
+                                        token = {
+                                            'address': contract_addr,
+                                            'name': name,
+                                            'symbol': symbol,
+                                            'decimals': decimals,
+                                            'total_supply': str(total_supply),
+                                            'deployer': tx['from'],
+                                            'block': block_num,
+                                            'tx_hash': tx['hash'].hex(),
+                                            'liquidity_usd': 0,
+                                            'has_liquidity': False
+                                        }
+                                        
+                                        store.add_token(token)
+                                        print(f"New token: {name} ({symbol}) at {contract_addr}")
+                                        
+                                        # Broadcast to WebSocket clients
+                                        await manager.broadcast({"type": "new_token", "data": token})
+                                    except:
+                                        pass  # Not an ERC20
+                            except:
+                                pass
+                except Exception as e:
+                    print(f"Block scan error: {e}")
+                    
+            last_block = min(last_block + 10, current_block)
+            await asyncio.sleep(2)  # Scan every 2 seconds
+            
+        except Exception as e:
+            print(f"Scanner error: {e}")
+            await asyncio.sleep(5)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start background scanner
+    scanner_task = asyncio.create_task(background_scanner())
+    yield
+    # Cleanup
+    scanner_task.cancel()
+
 # App setup
-app = FastAPI(title="MegaETH Alpha Suite", version="1.0.0")
+app = FastAPI(title="MegaETH Alpha Suite", version="1.0.0", lifespan=lifespan)
 
 # Static files and templates
 BASE_DIR = Path(__file__).parent
