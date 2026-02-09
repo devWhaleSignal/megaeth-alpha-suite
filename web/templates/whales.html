@@ -21,6 +21,7 @@
             <a href="/"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
             <a href="/tokens"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M6 12h12"/></svg>Tokens</a>
             <a href="/whales" class="active"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Whales</a>
+            <a href="/leaderboard"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z"/></svg>Leaderboard</a>
             <a href="/arbitrage"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>Arbitrage</a>
         </div>
         <div class="status"><span class="status-dot"></span>LIVE</div>
@@ -28,7 +29,7 @@
 
     <main class="container">
         <header class="page-header">
-            <div><h1>Whale Tracker</h1><p class="subtitle">Monitor high-value wallet activity</p></div>
+            <div><h1>Whale Tracker</h1><p class="subtitle">Monitor high-value wallet activity with P&L tracking</p></div>
         </header>
         
         <div class="filters">
@@ -41,6 +42,13 @@
                 <option value="buy">Buys Only</option>
                 <option value="sell">Sells Only</option>
             </select>
+            <select class="filter-select" id="label-filter">
+                <option value="all">All Labels</option>
+                <option value="whale">Whales</option>
+                <option value="sniper">Snipers</option>
+                <option value="builder">Builders</option>
+                <option value="farmer">Farmers</option>
+            </select>
         </div>
 
         <div class="table-wrapper">
@@ -49,31 +57,78 @@
                     <tr>
                         <th>Time</th>
                         <th>Wallet</th>
+                        <th>Label</th>
                         <th>Action</th>
                         <th>Token</th>
                         <th>Amount</th>
+                        <th>P&L</th>
                         <th>TX</th>
                     </tr>
                 </thead>
                 <tbody id="whales-tbody">
                     {% for trade in trades %}
-                    <tr class="{{ trade.type | lower }}">
-                        <td class="mono">{{ trade.timestamp }}</td>
-                        <td><span class="wallet-name">{{ trade.wallet.label }}</span><span class="wallet-addr mono dim">{{ trade.wallet.address[:8] }}...</span></td>
+                    <tr class="{{ trade.type | lower }}" data-label="{{ trade.wallet_label|default('unknown') }}">
+                        <td class="mono">{{ trade.timestamp[:19] if trade.timestamp else '-' }}</td>
+                        <td>
+                            <span class="wallet-name">{{ trade.wallet_name|default('Unknown') }}</span>
+                            <span class="wallet-addr mono dim">{{ trade.wallet[:8] if trade.wallet else '0x...' }}...</span>
+                        </td>
+                        <td>
+                            <span class="wallet-label {{ trade.wallet_label|default('unknown') }}">
+                                {{ trade.wallet_label|default('unknown') }}
+                            </span>
+                        </td>
                         <td><span class="badge {{ 'buy' if trade.type == 'BUY' else 'sell' }}">{{ trade.type }}</span></td>
-                        <td>{{ trade.token | default('ETH') }}</td>
-                        <td class="bold">{{ trade.amount }} ETH</td>
+                        <td>{{ trade.token_symbol|default(trade.token)|default('ETH') }}</td>
+                        <td class="bold mono">{{ trade.amount_eth|default(trade.amount)|default(0) }} ETH</td>
+                        <td class="mono {% if trade.pnl_eth|default(0) >= 0 %}text-green{% else %}text-red{% endif %}">
+                            {% if trade.pnl_eth is defined %}
+                            {{ '+' if trade.pnl_eth >= 0 else '' }}{{ "%.4f"|format(trade.pnl_eth) }}
+                            {% else %}-{% endif %}
+                        </td>
                         <td><a href="https://explorer.megaeth.com/tx/{{ trade.tx_hash }}" target="_blank" class="btn-sm">View</a></td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="6" class="empty">No whale activity detected</td></tr>
+                    <tr><td colspan="8" class="empty">No whale activity detected yet. Monitoring...</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </main>
 
+    <footer><span>MegaETH Alpha Suite</span><span class="sep">|</span><span>Real-time Blockchain Intelligence</span></footer>
     <script src="/static/js/three-bg.js"></script>
     <script src="/static/js/app.js"></script>
+    <script>
+        // Filter functionality
+        const searchInput = document.getElementById('whale-search');
+        const actionFilter = document.getElementById('action-filter');
+        const labelFilter = document.getElementById('label-filter');
+        
+        function applyFilters() {
+            const search = searchInput.value.toLowerCase();
+            const action = actionFilter.value;
+            const label = labelFilter.value;
+            
+            document.querySelectorAll('#whales-tbody tr').forEach(row => {
+                if (row.querySelector('.empty')) return;
+                
+                const text = row.textContent.toLowerCase();
+                const rowAction = row.classList.contains('buy') ? 'buy' : 'sell';
+                const rowLabel = row.dataset.label || 'unknown';
+                
+                let show = true;
+                if (search && !text.includes(search)) show = false;
+                if (action !== 'all' && rowAction !== action) show = false;
+                if (label !== 'all' && rowLabel !== label) show = false;
+                
+                row.style.display = show ? '' : 'none';
+            });
+        }
+        
+        searchInput.addEventListener('input', applyFilters);
+        actionFilter.addEventListener('change', applyFilters);
+        labelFilter.addEventListener('change', applyFilters);
+    </script>
 </body>
 </html>

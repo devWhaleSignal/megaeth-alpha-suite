@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - MegaETH Alpha Suite</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div class="gradient-overlay"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 32 32" fill="none">
+                    <path d="M16 2L4 9V23L16 30L28 23V9L16 2Z" stroke="url(#logo-grad)" stroke-width="2"/>
+                    <path d="M16 8L10 11.5V18.5L16 22L22 18.5V11.5L16 8Z" fill="url(#logo-grad)"/>
+                    <defs><linearGradient id="logo-grad" x1="4" y1="2" x2="28" y2="30"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs>
+                </svg>
+            </div>
+            <span class="logo-text">MegaETH <span class="accent">Alpha</span></span>
+        </div>
+        <div class="nav-links">
+            <a href="/"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+            <a href="/tokens"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M6 12h12"/></svg>Tokens</a>
+            <a href="/whales"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Whales</a>
+            <a href="/leaderboard" class="active"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z"/></svg>Leaderboard</a>
+            <a href="/arbitrage"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>Arbitrage</a>
+        </div>
+        <div class="status"><span class="status-dot"></span>LIVE</div>
+    </nav>
+
+    <main class="container">
+        <header class="page-header">
+            <div>
+                <h1>Wallet Leaderboard</h1>
+                <p class="subtitle">Top performing wallets by P&L</p>
+            </div>
+            <div class="network-badge"><span class="dot"></span>MegaETH Mainnet</div>
+        </header>
+        
+        <div class="panel full">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z"/></svg>
+                    <h2>Top Wallets</h2>
+                </div>
+            </div>
+            <div class="panel-content">
+                <div class="leaderboard-table">
+                    <div class="table-header">
+                        <div class="col rank">#</div>
+                        <div class="col address">Wallet</div>
+                        <div class="col label">Label</div>
+                        <div class="col score">Score</div>
+                        <div class="col trades">Trades</div>
+                        <div class="col winrate">Win Rate</div>
+                        <div class="col pnl">P&L (ETH)</div>
+                    </div>
+                    <div id="leaderboard-body">
+                        {% for wallet in wallets %}
+                        <div class="table-row">
+                            <div class="col rank">
+                                {% if loop.index == 1 %}
+                                <span class="medal gold">1</span>
+                                {% elif loop.index == 2 %}
+                                <span class="medal silver">2</span>
+                                {% elif loop.index == 3 %}
+                                <span class="medal bronze">3</span>
+                                {% else %}
+                                {{ loop.index }}
+                                {% endif %}
+                            </div>
+                            <div class="col address">
+                                <code>{{ wallet.address[:8] }}...{{ wallet.address[-6:] }}</code>
+                            </div>
+                            <div class="col label">
+                                <span class="wallet-label {{ wallet.label }}">{{ wallet.label }}</span>
+                            </div>
+                            <div class="col score">
+                                <div class="score-badge {% if wallet.confidence_score >= 75 %}high{% elif wallet.confidence_score >= 50 %}medium{% else %}low{% endif %}">
+                                    {{ wallet.confidence_score }}
+                                </div>
+                            </div>
+                            <div class="col trades">{{ wallet.total_trades }}</div>
+                            <div class="col winrate">
+                                <span class="{% if wallet.win_rate >= 60 %}text-green{% elif wallet.win_rate >= 40 %}text-yellow{% else %}text-red{% endif %}">
+                                    {{ "%.1f"|format(wallet.win_rate) }}%
+                                </span>
+                            </div>
+                            <div class="col pnl {% if wallet.total_pnl_eth >= 0 %}text-green{% else %}text-red{% endif %}">
+                                {% if wallet.total_pnl_eth >= 0 %}+{% endif %}{{ "%.4f"|format(wallet.total_pnl_eth) }}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <div class="spinner"></div>
+                            <p>No wallet data yet. Tracking in progress...</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panels">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        <h2>Label Distribution</h2>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="label-stats" id="label-stats">
+                        <div class="label-item">
+                            <span class="wallet-label builder">BUILDER</span>
+                            <span class="label-count" id="builder-count">0</span>
+                        </div>
+                        <div class="label-item">
+                            <span class="wallet-label sniper">SNIPER</span>
+                            <span class="label-count" id="sniper-count">0</span>
+                        </div>
+                        <div class="label-item">
+                            <span class="wallet-label whale">WHALE</span>
+                            <span class="label-count" id="whale-count">0</span>
+                        </div>
+                        <div class="label-item">
+                            <span class="wallet-label farmer">FARMER</span>
+                            <span class="label-count" id="farmer-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+                        <h2>Stats Overview</h2>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="stats-list">
+                        <div class="stat-row">
+                            <span>Total Wallets Tracked</span>
+                            <span id="total-wallets">{{ wallets|length }}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Avg Win Rate</span>
+                            <span id="avg-winrate">-</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Total P&L</span>
+                            <span id="total-pnl" class="text-green">-</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Best Performer</span>
+                            <span id="best-wallet">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer><span>MegaETH Alpha Suite</span><span class="sep">|</span><span>Real-time Blockchain Intelligence</span></footer>
+    <script src="/static/js/three-bg.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Update stats
+        async function updateLeaderboardStats() {
+            const res = await fetch('/api/wallets/leaderboard');
+            const wallets = await res.json();
+            
+            if (wallets.length > 0) {
+                // Label counts
+                const labels = {builder: 0, sniper: 0, whale: 0, farmer: 0};
+                let totalWinRate = 0;
+                let totalPnl = 0;
+                
+                wallets.forEach(w => {
+                    if (labels[w.label] !== undefined) labels[w.label]++;
+                    totalWinRate += w.win_rate || 0;
+                    totalPnl += w.total_pnl_eth || 0;
+                });
+                
+                document.getElementById('builder-count').textContent = labels.builder;
+                document.getElementById('sniper-count').textContent = labels.sniper;
+                document.getElementById('whale-count').textContent = labels.whale;
+                document.getElementById('farmer-count').textContent = labels.farmer;
+                
+                document.getElementById('avg-winrate').textContent = (totalWinRate / wallets.length).toFixed(1) + '%';
+                document.getElementById('total-pnl').textContent = (totalPnl >= 0 ? '+' : '') + totalPnl.toFixed(4) + ' ETH';
+                document.getElementById('best-wallet').textContent = wallets[0].address.slice(0, 8) + '...';
+            }
+        }
+        updateLeaderboardStats();
+        setInterval(updateLeaderboardStats, 10000);
+    </script>
+</body>
+</html>
