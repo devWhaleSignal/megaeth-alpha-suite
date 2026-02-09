@@ -1,6 +1,6 @@
 {
   "network": {
-    "rpc_url": "https://mainnet.megaeth.com/rpc",
+    "rpc_url": "https://rpc-megaeth-mainnet.globalstake.io",
     "chain_id": 4326,
     "explorer_url": "https://megaeth.blockscout.com"
   },
