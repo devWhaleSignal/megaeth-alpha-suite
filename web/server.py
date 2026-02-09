@@ -286,10 +286,7 @@ manager = ConnectionManager()
 # Routes
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "stats": store.stats
-    })
+    return templates.TemplateResponse("scanner.html", {"request": request})
 
 @app.get("/tokens", response_class=HTMLResponse)
 async def tokens_page(request: Request):
