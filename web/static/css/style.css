@@ -124,6 +124,27 @@ body {
     box-shadow: 0 0 10px var(--green);
 }
 
+.twitter-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    color: var(--text-dim);
+    transition: all 0.2s;
+}
+
+.twitter-link:hover {
+    color: var(--text);
+    background: var(--surface-light);
+}
+
+.twitter-link svg {
+    width: 18px;
+    height: 18px;
+}
+
 @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.7; transform: scale(1.1); }
