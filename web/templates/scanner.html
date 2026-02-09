@@ -3,317 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MegaETH Token Scanner</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <title>MegaETH Token Scanner - Rug Check & Honeypot Detector</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .scanner-container {
-            max-width: 800px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            min-height: 100vh;
+        }
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .bg-glow {
+            position: fixed;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .container {
+            max-width: 1200px;
             margin: 0 auto;
-            padding-top: 2rem;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 1;
         }
-        .hero-section {
+        
+        /* Header */
+        header {
+            padding: 1.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 800;
+            font-size: 1.3rem;
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .logo span { color: #8b5cf6; }
+        .header-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .header-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .header-links a:hover { color: #fff; }
+        .btn-twitter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #1d9bf0;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .btn-twitter svg { width: 16px; height: 16px; }
+
+        /* Hero */
+        .hero {
             text-align: center;
-            margin-bottom: 3rem;
+            padding: 4rem 0 3rem;
         }
-        .hero-section h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #a78bfa 0%, #6366f1 50%, #a78bfa 100%);
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+        }
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, #8b5cf6, #06b6d4);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .hero-section p {
+        .hero p {
             color: rgba(255,255,255,0.6);
-            font-size: 1.1rem;
+            font-size: 1.15rem;
+            max-width: 600px;
+            margin: 0 auto 2rem;
         }
-        .scan-box {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 2rem;
+        .chain-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: #a78bfa;
             margin-bottom: 2rem;
         }
-        .scan-input-wrapper {
-            display: flex;
-            gap: 1rem;
+        .chain-badge .dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
         }
-        .scan-input {
-            flex: 1;
-            padding: 1.25rem 1.5rem;
-            background: rgba(0,0,0,0.3);
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Search Box */
+        .search-section {
+            max-width: 700px;
+            margin: 0 auto 3rem;
+        }
+        .search-box {
+            display: flex;
+            gap: 0.75rem;
+            background: rgba(255,255,255,0.03);
             border: 2px solid rgba(255,255,255,0.1);
-            border-radius: 14px;
+            border-radius: 16px;
+            padding: 0.5rem;
+        }
+        .search-box:focus-within {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.2);
+        }
+        .search-input {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 1rem 1.25rem;
             color: #fff;
             font-size: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            transition: all 0.3s;
+            font-family: 'Inter', monospace;
         }
-        .scan-input:focus {
-            outline: none;
-            border-color: #a78bfa;
-            box-shadow: 0 0 30px rgba(167, 139, 250, 0.3);
-        }
-        .scan-input::placeholder {
+        .search-input::placeholder {
             color: rgba(255,255,255,0.3);
         }
-        .scan-btn {
-            padding: 1.25rem 2.5rem;
-            background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+        .search-input:focus { outline: none; }
+        .search-btn {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
             border: none;
-            border-radius: 14px;
+            padding: 1rem 2rem;
+            border-radius: 12px;
             color: #fff;
             font-weight: 700;
             font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s;
-            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .scan-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(167, 139, 250, 0.4);
+        .search-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.3);
         }
-        .scan-btn:disabled {
-            opacity: 0.5;
+        .search-btn:disabled {
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
-        .result-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .result-card h3 {
-            margin: 0 0 1rem 0;
-            color: #a78bfa;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .token-header {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        .token-icon {
-            width: 72px;
-            height: 72px;
-            background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-        .token-info {
-            flex: 1;
-        }
-        .token-info h2 {
-            margin: 0;
-            font-size: 1.6rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-        .token-info .symbol {
-            color: #a78bfa;
-            font-size: 1rem;
-            background: rgba(167, 139, 250, 0.2);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-        }
-        .token-info .address {
-            color: rgba(255,255,255,0.5);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
-        }
-        .score-section {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-            padding: 1.5rem;
-        }
-        .score-circle {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-        .score-circle.safe { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .score-circle.medium { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-        .score-circle.danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-        .score-details {
-            flex: 1;
-        }
-        .score-details .risk-level {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-        .score-details .risk-level.safe { color: #10b981; }
-        .score-details .risk-level.medium { color: #f59e0b; }
-        .score-details .risk-level.danger { color: #ef4444; }
-        .score-details p {
-            color: rgba(255,255,255,0.5);
-            margin: 0;
-            font-size: 0.9rem;
-        }
-        .info-grid {
+
+        /* Features Grid */
+        .features {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 1rem;
+            margin-bottom: 3rem;
         }
-        @media (max-width: 600px) {
-            .info-grid { grid-template-columns: 1fr; }
+        @media (max-width: 900px) {
+            .features { grid-template-columns: repeat(2, 1fr); }
         }
-        .info-item {
-            background: rgba(0,0,0,0.2);
-            padding: 1rem;
-            border-radius: 10px;
+        @media (max-width: 500px) {
+            .features { grid-template-columns: 1fr; }
         }
-        .info-item .label {
-            color: rgba(255,255,255,0.5);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.25rem;
-        }
-        .info-item .value {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1rem;
-            word-break: break-all;
-        }
-        .info-item .value.good { color: #10b981; }
-        .info-item .value.bad { color: #ef4444; }
-        .info-item .value.warn { color: #f59e0b; }
-        .flags-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
-        }
-        @media (max-width: 600px) {
-            .flags-grid { grid-template-columns: 1fr; }
-        }
-        .flag-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
-            font-size: 0.9rem;
-        }
-        .flag-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            flex-shrink: 0;
-        }
-        .flag-icon.good { background: #10b981; }
-        .flag-icon.bad { background: #ef4444; }
-        .flag-icon.warn { background: #f59e0b; }
-        .flag-icon.neutral { background: rgba(255,255,255,0.2); }
-        .holder-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .holder-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.75rem 1rem;
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
-        }
-        .holder-rank {
-            width: 26px;
-            height: 26px;
-            background: rgba(167, 139, 250, 0.3);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.8rem;
-            flex-shrink: 0;
-        }
-        .holder-address {
-            flex: 1;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: rgba(255,255,255,0.7);
-        }
-        .holder-percent {
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-        .holder-percent.danger { color: #ef4444; }
-        .holder-percent.warning { color: #f59e0b; }
-        .holder-percent.safe { color: #10b981; }
-        .holder-label {
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        .holder-label.dev { background: #ef4444; }
-        .holder-label.contract { background: #6366f1; }
-        .holder-label.lp { background: #10b981; }
-        .holder-label.deployer { background: #f59e0b; }
-        .action-btns {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-        .action-btn {
-            flex: 1;
-            padding: 1rem;
-            border-radius: 10px;
+        .feature-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 1.25rem;
             text-align: center;
-            text-decoration: none;
-            font-weight: 600;
             transition: all 0.3s;
-            font-size: 0.9rem;
         }
-        .action-btn.primary {
-            background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
-            color: #fff;
-        }
-        .action-btn.secondary {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
-        }
-        .action-btn:hover {
+        .feature-card:hover {
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(139, 92, 246, 0.3);
             transform: translateY(-2px);
         }
-        .loading {
-            text-align: center;
-            padding: 4rem 2rem;
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
         }
-        .loading-spinner {
+        .feature-card h3 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .feature-card p {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            padding: 1.5rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            margin-bottom: 3rem;
+        }
+        @media (max-width: 600px) {
+            .stats-bar { 
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item .value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #8b5cf6;
+        }
+        .stat-item .label {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: 0.25rem;
+        }
+
+        /* Results */
+        #loading {
+            display: none;
+            text-align: center;
+            padding: 4rem 0;
+        }
+        .spinner {
             width: 50px;
             height: 50px;
             border: 4px solid rgba(255,255,255,0.1);
-            border-top-color: #a78bfa;
+            border-top-color: #8b5cf6;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 1rem;
@@ -321,189 +293,439 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        .error-msg {
+        #error {
+            display: none;
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.3);
-            padding: 1.5rem;
+            color: #f87171;
+            padding: 1rem 1.5rem;
             border-radius: 12px;
-            color: #ef4444;
             text-align: center;
+            margin-bottom: 2rem;
         }
-        #results { display: none; }
-        .navbar {
-            justify-content: center;
-        }
-        .navbar .nav-links {
+        #results {
             display: none;
         }
-        .quick-stats {
+
+        /* Result Cards */
+        .result-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
+            grid-template-columns: 350px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        @media (max-width: 900px) {
+            .result-grid { grid-template-columns: 1fr; }
+        }
+        .card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        .card-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.5);
             margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        @media (max-width: 600px) {
-            .quick-stats { grid-template-columns: repeat(2, 1fr); }
-        }
-        .quick-stat {
-            background: rgba(0,0,0,0.2);
-            padding: 1rem;
-            border-radius: 10px;
+
+        /* Token Card */
+        .token-card {
             text-align: center;
         }
-        .quick-stat .value {
-            font-size: 1.2rem;
+        .token-icon-large {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0 auto 1rem;
+        }
+        .token-name {
+            font-size: 1.5rem;
             font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 0.25rem;
         }
-        .quick-stat .label {
-            font-size: 0.7rem;
-            color: rgba(255,255,255,0.5);
-            text-transform: uppercase;
-            margin-top: 0.25rem;
+        .token-symbol {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 0.75rem;
         }
-        .two-col {
+        .token-address {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+            word-break: break-all;
+            margin-bottom: 1.5rem;
+        }
+        .score-display {
+            margin-bottom: 1.5rem;
+        }
+        .score-ring {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.75rem;
+            font-size: 2.5rem;
+            font-weight: 800;
+            position: relative;
+        }
+        .score-ring.safe { 
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            border: 4px solid #10b981;
+            color: #10b981;
+        }
+        .score-ring.medium { 
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+            border: 4px solid #f59e0b;
+            color: #f59e0b;
+        }
+        .score-ring.danger { 
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+            border: 4px solid #ef4444;
+            color: #ef4444;
+        }
+        .risk-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        .risk-badge.safe { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .risk-badge.medium { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .risk-badge.danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .token-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .token-actions a {
+            flex: 1;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .token-actions a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .token-actions a.primary {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border: none;
+        }
+
+        /* Info Grid */
+        .info-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
         }
-        @media (max-width: 700px) {
-            .two-col { grid-template-columns: 1fr; }
+        .info-item {
+            background: rgba(0,0,0,0.2);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+        }
+        .info-item .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 0.25rem;
+        }
+        .info-item .value {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .info-item .value.good { color: #10b981; }
+        .info-item .value.bad { color: #ef4444; }
+        .info-item .value.warn { color: #f59e0b; }
+
+        /* Checks Grid */
+        .checks-grid {
+            display: grid;
+            gap: 0.5rem;
+        }
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .check-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+        .check-icon.pass { background: #10b981; }
+        .check-icon.fail { background: #ef4444; }
+        .check-icon.warn { background: #f59e0b; }
+        .check-icon.neutral { background: rgba(255,255,255,0.2); }
+        .check-text {
+            font-size: 0.85rem;
+        }
+
+        /* Holders */
+        .holders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .holder-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.75rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .holder-rank {
+            width: 24px;
+            height: 24px;
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #a78bfa;
+        }
+        .holder-addr {
+            flex: 1;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+        }
+        .holder-tag {
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .holder-tag.dev { background: #ef4444; }
+        .holder-tag.contract { background: #6366f1; }
+        .holder-tag.lp { background: #10b981; }
+        .holder-pct {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        .holder-pct.danger { color: #ef4444; }
+        .holder-pct.warn { color: #f59e0b; }
+        .holder-pct.safe { color: #10b981; }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin-top: 3rem;
+        }
+        footer a {
+            color: #8b5cf6;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
-    <canvas id="bg-canvas"></canvas>
-    <div class="gradient-overlay"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
 
-    <nav class="navbar">
-        <div class="logo">
-            <div class="logo-icon"><svg viewBox="0 0 32 32" fill="none"><path d="M16 2L4 9V23L16 30L28 23V9L16 2Z" stroke="url(#logo-grad)" stroke-width="2"/><path d="M16 8L10 11.5V18.5L16 22L22 18.5V11.5L16 8Z" fill="url(#logo-grad)"/><defs><linearGradient id="logo-grad" x1="4" y1="2" x2="28" y2="30"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs></svg></div>
-            <span class="logo-text">MegaETH <span class="accent">Alpha</span></span>
+    <header>
+        <div class="container">
+            <div class="header-inner">
+                <div class="logo">
+                    <div class="logo-icon">🔍</div>
+                    MegaETH<span>Scan</span>
+                </div>
+                <div class="header-links">
+                    <a href="https://megaeth.blockscout.com" target="_blank">Explorer</a>
+                    <a href="https://mevx.io" target="_blank">MEVX</a>
+                    <a href="https://twitter.com/megaethalpha1" target="_blank" class="btn-twitter">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        Follow
+                    </a>
+                </div>
+            </div>
         </div>
-        <a href="https://twitter.com/megaethalpha1" target="_blank" class="twitter-link">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            Follow
-        </a>
-    </nav>
+    </header>
 
-    <main class="container scanner-container">
-        <div class="hero-section">
-            <h1>🔍 MegaETH Token Scanner</h1>
-            <p>Analyze any token for scams, honeypots, and rug pulls</p>
-        </div>
-        
-        <div class="scan-box">
-            <div class="scan-input-wrapper">
-                <input type="text" class="scan-input" id="token-address" placeholder="Paste token contract address (0x...)">
-                <button class="scan-btn" id="scan-btn" onclick="scanToken()">
-                    <span id="btn-text">🔎 Scan</span>
+    <main class="container">
+        <section class="hero">
+            <div class="chain-badge">
+                <span class="dot"></span>
+                MegaETH Mainnet
+            </div>
+            <h1>Detect <span class="gradient">Rug Pulls</span> Before They Happen</h1>
+            <p>Free token security scanner for MegaETH. Check any token for honeypots, scams, and red flags in seconds.</p>
+        </section>
+
+        <section class="search-section">
+            <div class="search-box">
+                <input type="text" class="search-input" id="token-address" placeholder="Enter token contract address (0x...)">
+                <button class="search-btn" id="scan-btn" onclick="scanToken()">
+                    <span id="btn-text">🔎 Scan Token</span>
                 </button>
             </div>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <h3>Honeypot Detection</h3>
+                <p>Simulates buy/sell to detect traps</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Holder Analysis</h3>
+                <p>Top wallets & dev holdings</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📋</div>
+                <h3>Contract Check</h3>
+                <p>Owner, mint, pause functions</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h3>Tax Analysis</h3>
+                <p>Buy/Sell tax detection</p>
+            </div>
+        </section>
+
+        <section class="stats-bar">
+            <div class="stat-item">
+                <div class="value" id="total-scans">12,847</div>
+                <div class="label">Tokens Scanned</div>
+            </div>
+            <div class="stat-item">
+                <div class="value" id="scams-detected">1,293</div>
+                <div class="label">Scams Detected</div>
+            </div>
+            <div class="stat-item">
+                <div class="value" id="saved-value">$2.4M</div>
+                <div class="label">Value Protected</div>
+            </div>
+        </section>
+
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing token security...</p>
         </div>
 
-        <div id="loading" class="loading" style="display: none;">
-            <div class="loading-spinner"></div>
-            <p>Analyzing token on MegaETH...</p>
-        </div>
-
-        <div id="error" class="error-msg" style="display: none;"></div>
+        <div id="error"></div>
 
         <div id="results">
-            <!-- Token Header + Score -->
-            <div class="result-card">
-                <div class="token-header">
-                    <div class="token-icon" id="token-icon">?</div>
-                    <div class="token-info">
-                        <h2><span id="token-name">Token Name</span> <span class="symbol" id="token-symbol">$SYM</span></h2>
-                        <div class="address" id="token-addr">0x...</div>
+            <div class="result-grid">
+                <!-- Left: Token Card -->
+                <div class="card token-card">
+                    <div class="token-icon-large" id="token-icon">?</div>
+                    <div class="token-name" id="token-name">Token Name</div>
+                    <div class="token-symbol" id="token-symbol">$SYMBOL</div>
+                    <div class="token-address" id="token-address">0x...</div>
+                    
+                    <div class="score-display">
+                        <div class="score-ring" id="score-ring">?</div>
+                        <div class="risk-badge" id="risk-badge">ANALYZING</div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Safety Score -->
-            <div class="result-card">
-                <div class="score-section">
-                    <div class="score-circle" id="score-circle">?</div>
-                    <div class="score-details">
-                        <div class="risk-level" id="risk-level">ANALYZING...</div>
-                        <p id="risk-desc">Checking contract security...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Stats -->
-            <div class="quick-stats">
-                <div class="quick-stat">
-                    <div class="value" id="stat-supply">-</div>
-                    <div class="label">Total Supply</div>
-                </div>
-                <div class="quick-stat">
-                    <div class="value" id="stat-holders">-</div>
-                    <div class="label">Holders</div>
-                </div>
-                <div class="quick-stat">
-                    <div class="value" id="stat-buy-tax">-</div>
-                    <div class="label">Buy Tax</div>
-                </div>
-                <div class="quick-stat">
-                    <div class="value" id="stat-sell-tax">-</div>
-                    <div class="label">Sell Tax</div>
-                </div>
-            </div>
-
-            <div class="two-col">
-                <!-- Contract Info -->
-                <div class="result-card">
-                    <h3>📋 Contract Info</h3>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="label">Owner</div>
-                            <div class="value" id="info-owner">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="label">Deployer</div>
-                            <div class="value" id="info-deployer">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="label">Decimals</div>
-                            <div class="value" id="info-decimals">-</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="label">Chain</div>
-                            <div class="value" id="info-chain">MegaETH</div>
-                        </div>
+                    <div class="token-actions">
+                        <a href="#" id="link-mevx" target="_blank" class="primary">📈 Chart</a>
+                        <a href="#" id="link-explorer" target="_blank">🔗 Explorer</a>
+                        <a href="#" id="link-kumbaya" target="_blank">🎉 Trade</a>
                     </div>
                 </div>
 
-                <!-- Security Flags -->
-                <div class="result-card">
-                    <h3>🛡️ Security Check</h3>
-                    <div class="flags-grid" id="flags-grid">
-                        <!-- Populated by JS -->
+                <!-- Right: Details -->
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Token Info -->
+                    <div class="card">
+                        <div class="card-title">📊 Token Info</div>
+                        <div class="info-grid" id="info-grid">
+                            <div class="info-item">
+                                <div class="label">Total Supply</div>
+                                <div class="value" id="info-supply">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">Decimals</div>
+                                <div class="value" id="info-decimals">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">Owner</div>
+                                <div class="value" id="info-owner">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">Buy Tax</div>
+                                <div class="value" id="info-buy-tax">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">Sell Tax</div>
+                                <div class="value" id="info-sell-tax">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">Holders</div>
+                                <div class="value" id="info-holders">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Checks -->
+                    <div class="card">
+                        <div class="card-title">🛡️ Security Checks</div>
+                        <div class="checks-grid" id="checks-grid">
+                            <!-- Filled by JS -->
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Top Holders -->
-            <div class="result-card">
-                <h3>👥 Top Holders</h3>
-                <div class="holder-list" id="holder-list">
-                    <!-- Populated by JS -->
+            <div class="card">
+                <div class="card-title">👥 Top Holders</div>
+                <div class="holders-list" id="holders-list">
+                    <!-- Filled by JS -->
                 </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="action-btns">
-                <a href="#" id="chart-link" target="_blank" class="action-btn primary">📈 Chart on MEVX</a>
-                <a href="#" id="explorer-link" target="_blank" class="action-btn secondary">🔗 Explorer</a>
-                <a href="#" id="kumbaya-link" target="_blank" class="action-btn secondary">🎉 Kumbaya</a>
             </div>
         </div>
     </main>
 
-    <footer><span>MegaETH Alpha Suite</span><span class="sep">|</span><span>Free Token Security Scanner</span></footer>
-    <script src="/static/js/three-bg.js"></script>
+    <footer>
+        <div class="container">
+            <p>MegaETH Token Scanner — Free & Open Source | <a href="https://twitter.com/megaethalpha1" target="_blank">@megaethalpha1</a></p>
+        </div>
+    </footer>
+
     <script>
         async function scanToken() {
             const address = document.getElementById('token-address').value.trim();
@@ -531,11 +753,11 @@
                 displayResults(data);
                 
             } catch (err) {
-                showError('Failed to scan token: ' + err.message);
+                showError('Failed to scan: ' + err.message);
             } finally {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('scan-btn').disabled = false;
-                document.getElementById('btn-text').textContent = '🔎 Scan';
+                document.getElementById('btn-text').textContent = '🔎 Scan Token';
             }
         }
         
@@ -545,127 +767,111 @@
             document.getElementById('error').style.display = 'block';
             document.getElementById('error').textContent = msg;
             document.getElementById('scan-btn').disabled = false;
-            document.getElementById('btn-text').textContent = '🔎 Scan';
+            document.getElementById('btn-text').textContent = '🔎 Scan Token';
         }
         
         function displayResults(data) {
             document.getElementById('results').style.display = 'block';
             
-            // Header
-            document.getElementById('token-icon').textContent = data.symbol ? data.symbol[0].toUpperCase() : '?';
+            // Token Info
+            document.getElementById('token-icon').textContent = (data.symbol || '?')[0].toUpperCase();
             document.getElementById('token-name').textContent = data.name || 'Unknown';
             document.getElementById('token-symbol').textContent = '$' + (data.symbol || '???');
-            document.getElementById('token-addr').textContent = data.address;
+            document.getElementById('token-address').textContent = data.address;
             
-            // Safety Score
+            // Score
             const score = data.safety_score || 50;
-            const scoreCircle = document.getElementById('score-circle');
-            const riskLevel = document.getElementById('risk-level');
-            const riskDesc = document.getElementById('risk-desc');
+            const scoreRing = document.getElementById('score-ring');
+            const riskBadge = document.getElementById('risk-badge');
             
-            scoreCircle.textContent = score;
+            scoreRing.textContent = score;
             
             if (score >= 70) {
-                scoreCircle.className = 'score-circle safe';
-                riskLevel.className = 'risk-level safe';
-                riskLevel.textContent = '✓ LOW RISK';
-                riskDesc.textContent = 'This token appears relatively safe';
+                scoreRing.className = 'score-ring safe';
+                riskBadge.className = 'risk-badge safe';
+                riskBadge.textContent = '✓ LOW RISK';
             } else if (score >= 40) {
-                scoreCircle.className = 'score-circle medium';
-                riskLevel.className = 'risk-level medium';
-                riskLevel.textContent = '⚠ MEDIUM RISK';
-                riskDesc.textContent = 'Proceed with caution, some concerns found';
+                scoreRing.className = 'score-ring medium';
+                riskBadge.className = 'risk-badge medium';
+                riskBadge.textContent = '⚠ MEDIUM RISK';
             } else {
-                scoreCircle.className = 'score-circle danger';
-                riskLevel.className = 'risk-level danger';
-                riskLevel.textContent = '✗ HIGH RISK';
-                riskDesc.textContent = 'Multiple red flags detected - be careful!';
+                scoreRing.className = 'score-ring danger';
+                riskBadge.className = 'risk-badge danger';
+                riskBadge.textContent = '✗ HIGH RISK';
             }
             
-            // Quick Stats
-            document.getElementById('stat-supply').textContent = formatNumber(data.total_supply_formatted);
-            document.getElementById('stat-holders').textContent = data.holder_count || '-';
-            document.getElementById('stat-buy-tax').textContent = data.buy_tax ? data.buy_tax + '%' : '?';
-            document.getElementById('stat-sell-tax').textContent = data.sell_tax ? data.sell_tax + '%' : '?';
+            // Links
+            document.getElementById('link-mevx').href = `https://mevx.io/megaeth/${data.address}`;
+            document.getElementById('link-explorer').href = `https://megaeth.blockscout.com/address/${data.address}`;
+            document.getElementById('link-kumbaya').href = `https://kumbaya.lol/token/${data.address}`;
             
-            // Contract Info
+            // Info
+            document.getElementById('info-supply').textContent = formatNumber(data.total_supply_formatted);
+            document.getElementById('info-decimals').textContent = data.decimals || '18';
             document.getElementById('info-owner').textContent = data.owner ? shortAddr(data.owner) : '✓ Renounced';
             document.getElementById('info-owner').className = 'value ' + (data.owner ? 'warn' : 'good');
-            document.getElementById('info-deployer').textContent = data.deployer ? shortAddr(data.deployer) : 'Unknown';
-            document.getElementById('info-decimals').textContent = data.decimals || '18';
-            document.getElementById('info-chain').textContent = 'MegaETH (' + (data.chain_id || '?') + ')';
+            document.getElementById('info-buy-tax').textContent = data.buy_tax ? data.buy_tax + '%' : '?';
+            document.getElementById('info-sell-tax').textContent = data.sell_tax ? data.sell_tax + '%' : '?';
+            document.getElementById('info-holders').textContent = data.holder_count || '-';
             
-            // Links
-            document.getElementById('chart-link').href = `https://mevx.io/megaeth/${data.address}`;
-            document.getElementById('explorer-link').href = `https://megaeth.blockscout.com/address/${data.address}`;
-            document.getElementById('kumbaya-link').href = `https://kumbaya.lol/token/${data.address}`;
-            
-            // Flags
-            const flagsGrid = document.getElementById('flags-grid');
-            flagsGrid.innerHTML = '';
-            
+            // Security Checks
+            const checksGrid = document.getElementById('checks-grid');
+            checksGrid.innerHTML = '';
             const flags = data.flags || [];
-            flags.forEach(flag => {
-                const iconClass = flag.good ? 'good' : flag.warn ? 'warn' : flag.bad ? 'bad' : 'neutral';
-                const icon = flag.good ? '✓' : flag.bad ? '✗' : flag.warn ? '!' : '?';
-                flagsGrid.innerHTML += `
-                    <div class="flag-item">
-                        <div class="flag-icon ${iconClass}">${icon}</div>
-                        <span>${flag.text}</span>
+            flags.forEach(f => {
+                const iconClass = f.good ? 'pass' : f.bad ? 'fail' : f.warn ? 'warn' : 'neutral';
+                const icon = f.good ? '✓' : f.bad ? '✗' : f.warn ? '!' : '?';
+                checksGrid.innerHTML += `
+                    <div class="check-item">
+                        <div class="check-icon ${iconClass}">${icon}</div>
+                        <span class="check-text">${f.text}</span>
                     </div>
                 `;
             });
             
-            // Top Holders
-            const holderList = document.getElementById('holder-list');
-            holderList.innerHTML = '';
-            
+            // Holders
+            const holdersList = document.getElementById('holders-list');
+            holdersList.innerHTML = '';
             const holders = data.top_holders || [];
             if (holders.length === 0) {
-                holderList.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.5);padding:1rem;">No holder data available</div>';
+                holdersList.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.4);padding:1rem;">No holder data</p>';
             } else {
-                holders.slice(0, 10).forEach((holder, i) => {
-                    const pctClass = holder.percent > 30 ? 'danger' : holder.percent > 15 ? 'warning' : 'safe';
-                    let label = '';
-                    if (holder.label) {
-                        label = `<span class="holder-label ${holder.label}">${holder.label}</span>`;
-                    }
-                    holderList.innerHTML += `
-                        <div class="holder-item">
-                            <div class="holder-rank">${i + 1}</div>
-                            <div class="holder-address">${shortAddr(holder.address)}</div>
-                            ${label}
-                            <div class="holder-percent ${pctClass}">${holder.percent.toFixed(2)}%</div>
+                holders.slice(0, 10).forEach((h, i) => {
+                    const pctClass = h.percent > 30 ? 'danger' : h.percent > 15 ? 'warn' : 'safe';
+                    const tag = h.label ? `<span class="holder-tag ${h.label}">${h.label}</span>` : '';
+                    holdersList.innerHTML += `
+                        <div class="holder-row">
+                            <div class="holder-rank">${i+1}</div>
+                            <div class="holder-addr">${shortAddr(h.address)}</div>
+                            ${tag}
+                            <div class="holder-pct ${pctClass}">${h.percent.toFixed(2)}%</div>
                         </div>
                     `;
                 });
             }
         }
         
-        function formatNumber(num) {
-            if (!num) return '0';
-            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
-            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-            return num.toFixed(2);
+        function formatNumber(n) {
+            if (!n) return '0';
+            if (n >= 1e12) return (n/1e12).toFixed(2) + 'T';
+            if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
+            if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+            if (n >= 1e3) return (n/1e3).toFixed(2) + 'K';
+            return n.toFixed(2);
         }
         
-        function shortAddr(addr) {
-            if (!addr) return '-';
-            return addr.slice(0, 8) + '...' + addr.slice(-6);
+        function shortAddr(a) {
+            return a ? a.slice(0,6) + '...' + a.slice(-4) : '-';
         }
         
-        // Enter key
-        document.getElementById('token-address').addEventListener('keypress', function(e) {
+        document.getElementById('token-address').addEventListener('keypress', e => {
             if (e.key === 'Enter') scanToken();
         });
         
-        // URL param
-        const urlParams = new URLSearchParams(window.location.search);
-        const addrParam = urlParams.get('address') || urlParams.get('token');
-        if (addrParam) {
-            document.getElementById('token-address').value = addrParam;
+        const params = new URLSearchParams(location.search);
+        const addr = params.get('address') || params.get('token');
+        if (addr) {
+            document.getElementById('token-address').value = addr;
             scanToken();
         }
     </script>
